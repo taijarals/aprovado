@@ -13,13 +13,11 @@ Candidatos e concurseiros que estão se preparando para os cargos de Auditor Fis
 - [x] Configuração de roteamento simplificado com Wouter.
 - [x] Autenticação completa via Supabase Auth (Login/Cadastro com E-mail e Senha).
 - [x] Proteção de rotas (Redirecionamento automático para usuários não logados).
-- [x] Layout base responsivo com Sidebar de navegação.
-
-### Planejadas
-- [ ] **Dashboard:** Visão geral do progresso do usuário, estatísticas de estudo e desempenho.
-- [ ] **Plano de Estudo:** Cronograma estruturado e adaptável baseado no edital e tempo disponível.
-- [ ] **Edital:** Mapeamento verticalizado dos tópicos exigidos pelos concursos SEFAZ-BA e SEFAZ-AL.
-- [ ] **Questões:** Banco de questões integrado (futuramente com auxílio de IA via Gemini) para prática e fixação, com histórico de acertos e erros.
+- [x] Layout base responsivo com Sidebar de navegação e seletor de edital ativo.
+- [x] **Dashboard:** KPIs de progresso, tópicos concluídos, taxa de acerto e gráfico de prioridade média por disciplina.
+- [x] **Plano de Estudo:** Cronograma em formato de acordeão por semanas, marcação de conclusão de materiais, visualização de `study_tip` em modal e filtro por disciplina.
+- [x] **Edital Mestre:** Tabela completa de tópicos com métricas de recorrência, tendência, peso, prioridade calculada, ordenação, filtros e indicador de tópicos compartilhados entre editais.
+- [x] **Questões:** Módulo de resolução de questões com gabarito comentado instantâneo, registro de tentativas e aba de estatísticas e desempenho por disciplina.
 
 ## Como rodar o projeto localmente
 
@@ -32,6 +30,7 @@ Candidatos e concurseiros que estão se preparando para os cargos de Auditor Fis
    ```env
    VITE_SUPABASE_URL="SUA_URL_DO_SUPABASE"
    VITE_SUPABASE_ANON_KEY="SUA_ANON_KEY_DO_SUPABASE"
+   SUPABASE_SERVICE_ROLE_KEY="SUA_SERVICE_ROLE_KEY"
    ```
 4. Inicie o servidor de desenvolvimento:
    ```bash
