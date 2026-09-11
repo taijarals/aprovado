@@ -40,11 +40,13 @@ export default function Layout({ children }: { children: ReactNode }) {
               {navigation.map((item) => {
                 const isActive = location === item.href;
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <a className={`${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'} group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors`}>
-                      <item.icon className={`${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300'} mr-3 flex-shrink-0 h-5 w-5 transition-colors`} aria-hidden="true" />
-                      {item.name}
-                    </a>
+                  <Link 
+                    key={item.name} 
+                    href={item.href}
+                    className={`${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'} group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors`}
+                  >
+                    <item.icon className={`${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300'} mr-3 flex-shrink-0 h-5 w-5 transition-colors`} aria-hidden="true" />
+                    {item.name}
                   </Link>
                 )
               })}
@@ -90,11 +92,14 @@ export default function Layout({ children }: { children: ReactNode }) {
               {navigation.map((item) => {
                 const isActive = location === item.href;
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <a onClick={() => setMobileMenuOpen(false)} className={`${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'} group flex items-center px-3 py-3 text-base font-medium rounded-lg`}>
-                      <item.icon className={`${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'} mr-4 flex-shrink-0 h-5 w-5`} aria-hidden="true" />
-                      {item.name}
-                    </a>
+                  <Link 
+                    key={item.name} 
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`${isActive ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white'} group flex items-center px-3 py-3 text-base font-medium rounded-lg`}
+                  >
+                    <item.icon className={`${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'} mr-4 flex-shrink-0 h-5 w-5`} aria-hidden="true" />
+                    {item.name}
                   </Link>
                 )
               })}

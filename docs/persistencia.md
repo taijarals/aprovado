@@ -11,15 +11,20 @@ O cliente Supabase (`src/lib/supabase.ts`) está globalmente configurado para ut
 { db: { schema: 'aprovado' } }
 ```
 
-### Tabelas Atuais
+### Tabelas Atuais (Fase 2)
 
-Atualmente, o projeto possui apenas as tabelas geradas e gerenciadas automaticamente pelo sistema de autenticação do Supabase:
-
-- **`auth.users` (Schema `auth`)**: Tabela nativa do Supabase que armazena os dados de credenciais, email, e IDs (UUID) dos usuários. Não é gerenciada manualmente pela aplicação, apenas lida via métodos de autenticação.
-
-*(Nota: À medida que tabelas de domínio, como `topicos`, `questoes` e `plano_estudo` forem criadas na Fase 2, elas serão listadas aqui e deverão residir no schema `aprovado` e possuirão chave estrangeira apontando para `auth.users(id)`).*
+As seguintes tabelas compõem o banco (todas em `aprovado`, exceto `auth.users`):
+- **Conteúdo Público/Geral:** `exams`, `topics`, `weeks`, `goals`, `materials`, `questions`.
+- **Dados Isolados do Usuário:** `user_progress`, `goal_completions`, `question_attempts`.
+- **Sistema:** `auth.users` (Gerenciada pelo Supabase).
 
 ## Políticas de Segurança (RLS - Row Level Security)
-No momento, como apenas o Auth está em uso, a segurança é baseada em JWTs do Supabase gerando sessões locais. 
-Assim que as tabelas de domínio forem criadas no schema `aprovado`, o RLS será ativado em **todas** as tabelas. As políticas de segurança garantirão que:
-- O usuário X só poderá ler, atualizar ou deletar registros do plano de estudo/histórico de questões criados pelo usuário X (`user_id = auth.uid()`).
+A segurança é gerenciada diretamente no banco de dados através de políticas RLS em todas as tabelas:
+
+1. **Tabelas de Conteúdo:**
+   - Possuem a política de `SELECT TO authenticated USING (true)`.
+   - Isso significa que qualquer usuário que fizer login no app consegue ler (baixar) editais, tópicos, planos de estudo e questões do banco. Edição/remoção só podem ser feitas via painel do Supabase ou superusuários (para garantir que alunos não alterem questões).
+
+2. **Tabelas de Progresso (`user_progress`, `goal_completions`, `question_attempts`):**
+   - Possuem políticas rígidas baseadas no UUID do dono: `FOR ALL TO authenticated USING (auth.uid() = user_id)`.
+   - Assim, o usuário X só poderá visualizar, criar, atualizar ou remover o seu próprio progresso no plano de estudos e no banco de questões. Dados de terceiros ficam inacessíveis no nível do banco.
