@@ -30,12 +30,16 @@ Este documento registra cronologicamente decisões arquiteturais e técnicas imp
 
 - **Decisão: Divisão clara entre Dados Estruturais e Progresso Pessoal.**
   - *Contexto:* O aplicativo precisa exibir os mesmos concursos e questões para todos, mas rastrear isoladamente os acertos de cada candidato.
-  - *Motivo:* Tabelas públicas (exams, topics, questions) otimizam cache e leitura (sem clonar dados). Tabelas isoladas (user_progress, question_attempts) cruzam o ID do usuário (auth.uid) com o ID estrutural para rastreamento exclusivo.
+  - *Motivo:* Tabelas públicas otimizam cache e leitura. Tabelas isoladas cruzam o ID do usuário com o ID estrutural para rastreamento exclusivo.
+
+- **Decisão: Relacionamento Muitos-para-Muitos entre Tópicos e Concursos (`topic_exams`).**
+  - *Contexto:* Concursos da mesma área fiscal (como SEFAZ-BA e SEFAZ-AL) compartilham uma grande quantidade de tópicos idênticos (ex: Direito Tributário, Contabilidade), mas com pesos, recorrências e tendências distintos por edital.
+  - *Motivo:* Em vez de duplicar a entidade de tópico, separamos os dados atemporais do tópico (`topics`) das métricas contextuais por edital (`topic_exams`). O progresso do usuário (`user_progress`) também foi ajustado para permitir o acompanhamento segmentado por edital quando necessário.
   
 - **Decisão: Fonte de Questões definida como `ia_nova` ou `ia_estilo_banca`.**
-  - *Contexto:* Riscos de direitos autorais ou termos de serviço ao fazer *scraping* ou importar bancos completos oficiais (QConcursos, TecConcursos).
-  - *Motivo:* Definimos explicitamente na regra de dados que as questões não são as oficiais, mas recriações geradas por Inteligência Artificial no exato estilo da banca real (FGV, CESPE) com base no edital, conferindo segurança jurídica e escopo flexível (Fase 3+ com Gemini).
+  - *Contexto:* Riscos de direitos autorais ou termos de serviço ao fazer *scraping* ou importar bancos completos oficiais.
+  - *Motivo:* Questões geradas por IA no estilo da banca real (FGV, CESPE) com base no edital, conferindo segurança jurídica e escopo flexível.
 
 - **Decisão: Deleções em Cascata (ON DELETE CASCADE) em FKs de dependência forte.**
   - *Contexto:* O que acontece quando um exame (Concurso) é deletado?
-  - *Motivo:* Propagar deleções ajuda na limpeza e manutenção do banco. Se um concurso é apagado, semanas (`weeks`), tópicos e metas vinculadas devem ir junto, pois não têm existência autônoma fora daquele concurso. Progresso atrelado a eles também é apagado.
+  - *Motivo:* Propagar deleções ajuda na limpeza e manutenção do banco. Se um concurso é apagado, semanas, relações de tópicos do edital e metas vinculadas vão junto.

@@ -29,33 +29,50 @@ export interface Database {
       topics: {
         Row: {
           id: string;
-          exam_id: string;
           discipline: string;
           subject: string;
           topic_name: string;
+          summary: string | null;
+          exam_tips: string | null;
+          source: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          discipline: string;
+          subject: string;
+          topic_name: string;
+          summary?: string | null;
+          exam_tips?: string | null;
+          source?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['aprovado']['Tables']['topics']['Insert']>;
+      };
+      topic_exams: {
+        Row: {
+          id: string;
+          topic_id: string;
+          exam_id: string;
           recurrence: number;
           trend: 'crescente' | 'estável' | 'decrescente' | null;
           weight: number | null;
           priority: number | null;
-          summary: string | null;
-          exam_tips: string | null;
-          source: string | null;
+          items_count: number | null;
+          is_discursive: boolean;
         };
         Insert: {
           id?: string;
+          topic_id: string;
           exam_id: string;
-          discipline: string;
-          subject: string;
-          topic_name: string;
           recurrence?: number;
           trend?: 'crescente' | 'estável' | 'decrescente' | null;
           weight?: number | null;
           priority?: number | null;
-          summary?: string | null;
-          exam_tips?: string | null;
-          source?: string | null;
+          items_count?: number | null;
+          is_discursive?: boolean;
         };
-        Update: Partial<Database['aprovado']['Tables']['topics']['Insert']>;
+        Update: Partial<Database['aprovado']['Tables']['topic_exams']['Insert']>;
       };
       weeks: {
         Row: {
@@ -152,6 +169,7 @@ export interface Database {
           id: string;
           user_id: string;
           topic_id: string;
+          exam_id: string;
           status: 'nao_estudado' | 'estudando' | 'estudado' | 'revisado';
           questions_done: number;
           correct_count: number;
@@ -163,6 +181,7 @@ export interface Database {
           id?: string;
           user_id: string;
           topic_id: string;
+          exam_id: string;
           status?: 'nao_estudado' | 'estudando' | 'estudado' | 'revisado';
           questions_done?: number;
           correct_count?: number;

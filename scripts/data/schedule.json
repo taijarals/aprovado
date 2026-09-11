@@ -1,0 +1,64 @@
+{
+  "semanas": [
+    {
+      "numero": 1,
+      "titulo": "Semana 1: Introdução ao Direito Tributário e Sistema",
+      "metas": [
+        {
+          "disciplina": "Direito Tributário",
+          "assunto": "Sistema Tributário Nacional",
+          "tipo": "teoria",
+          "titulo": "Estudo de Sistema Tributário Nacional",
+          "materiais": [
+            {
+              "tipo": "pdf",
+              "titulo": "Aula 01 - Sistema Tributário Nacional",
+              "url": "https://grancursosonline.com.br",
+              "dica_estudo": "Foque nas restrições constitucionais de competência e na repartição de receitas."
+            },
+            {
+              "tipo": "questoes",
+              "titulo": "Caderno de Questões - Sistema Tributário",
+              "url": "https://grancursosonline.com.br",
+              "dica_estudo": "Faça ao menos 30 questões comentadas da banca CESPE/CEBRASPE."
+            }
+          ]
+        },
+        {
+          "disciplina": "Direito Tributário",
+          "assunto": "Competência tributária",
+          "tipo": "teoria",
+          "titulo": "Estudo de Competência Tributária",
+          "materiais": [
+            {
+              "tipo": "pdf",
+              "titulo": "Aula 02 - Competência Tributária",
+              "url": "https://grancursosonline.com.br",
+              "dica_estudo": "Diferencie competência tributária de capacidade tributária ativa."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero": 2,
+      "titulo": "Semana 2: Contabilidade Geral Básica",
+      "metas": [
+        {
+          "disciplina": "Contabilidade Geral",
+          "assunto": "Patrimônio",
+          "tipo": "teoria",
+          "titulo": "Noções de Patrimônio e Equação Fundamental",
+          "materiais": [
+            {
+              "tipo": "videoaula",
+              "titulo": "Videoaula 01 - Estrutura Patrimonial",
+              "url": "https://grancursosonline.com.br",
+              "dica_estudo": "Entenda muito bem a origem e aplicação de recursos."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
