@@ -14,7 +14,8 @@ import {
   ListFilter, 
   Info,
   X,
-  BookOpen
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
 
 interface Material {
@@ -66,6 +67,44 @@ export default function PlanoEstudo() {
 
   // Study Tip modal state
   const [activeTip, setActiveTip] = useState<{ title: string; tip: string } | null>(null);
+
+  // AI Summary state & handler
+  const [generatingSummaryId, setGeneratingSummaryId] = useState<string | null>(null);
+  const [activeSummary, setActiveSummary] = useState<{ title: string; summary: string } | null>(null);
+
+  const handleGenerateSummary = async (mat: Material) => {
+    try {
+      setGeneratingSummaryId(mat.id);
+
+      const res = await fetch('/api/ai/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          materialId: mat.id,
+          title: mat.title,
+          studyTip: mat.study_tip
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao gerar resumo.');
+
+      setWeeks(prevWeeks => prevWeeks.map(w => ({
+        ...w,
+        goals: w.goals?.map(g => ({
+          ...g,
+          materials: g.materials?.map(m => m.id === mat.id ? { ...m, ai_summary: data.summary } : m)
+        }))
+      })));
+
+      setActiveSummary({ title: mat.title, summary: data.summary });
+    } catch (err: any) {
+      console.error('Erro ao gerar resumo com IA:', err);
+      alert(err.message || 'Erro ao gerar resumo com IA. Tente novamente.');
+    } finally {
+      setGeneratingSummaryId(null);
+    }
+  };
 
   useEffect(() => {
     if (selectedExam && user) {
@@ -366,6 +405,25 @@ export default function PlanoEstudo() {
                                 </div>
 
                                 <div className="flex items-center space-x-2 flex-shrink-0">
+                                  {mat.ai_summary ? (
+                                    <button
+                                      onClick={() => setActiveSummary({ title: mat.title, summary: mat.ai_summary! })}
+                                      className="inline-flex items-center space-x-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
+                                    >
+                                      <Sparkles className="h-3.5 w-3.5" />
+                                      <span>Resumo IA</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      disabled={generatingSummaryId === mat.id}
+                                      onClick={() => handleGenerateSummary(mat)}
+                                      className="inline-flex items-center space-x-1 text-xs font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1.5 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50"
+                                    >
+                                      <Sparkles className="h-3.5 w-3.5" />
+                                      <span>{generatingSummaryId === mat.id ? 'Gerando...' : 'Gerar Resumo IA'}</span>
+                                    </button>
+                                  )}
+
                                   {mat.url && (
                                     <a
                                       href={mat.url}
@@ -426,6 +484,38 @@ export default function PlanoEstudo() {
                 className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
               >
                 Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Summary Modal */}
+      {activeSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-2xl w-full p-6 shadow-xl relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setActiveSummary(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center space-x-2 text-purple-600 dark:text-purple-400 mb-2">
+              <Sparkles className="h-5 w-5" />
+              <h3 className="text-base font-semibold">Resumo Didático gerado por IA</h3>
+            </div>
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-100 dark:border-gray-800">
+              {activeSummary.title}
+            </h4>
+            <div className="max-h-[60vh] overflow-y-auto pr-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed space-y-3">
+              {activeSummary.summary}
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
+              <button
+                onClick={() => setActiveSummary(null)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Fechar
               </button>
             </div>
           </div>

@@ -49,3 +49,19 @@ A ordem e relevância com que um tópico de edital é sugerido ao aluno depende 
 - Módulo de resolução de questões com exibição de uma questão por vez.
 - Registra cada tentativa na tabela `question_attempts` e revela o gabarito comentado (`explanation`) imediatamente após a resposta.
 - Contém uma sub-aba de estatísticas detalhando o total respondido, taxa de acerto global e breakdown por disciplina.
+
+## 4. Funcionalidades de Inteligência Artificial Generativa (Gemini)
+
+### 4.1 Geração de Resumo sob Demanda
+- **Disponibilidade:** Na tela de **Plano de Estudo**, junto a cada material que possua `study_tip`.
+- **Cache (Economia de Chamadas):** Se o material já possui o campo `ai_summary` preenchido no banco de dados, a interface exibe o botão "Resumo IA" que abre diretamente o modal com o resumo salvo. Caso contrário, exibe o botão "Gerar Resumo IA".
+- **Comportamento:** Ao clicar, o sistema invoca o backend que chama o Gemini (`gemini-2.5-flash`) com contexto do `study_tip` e do título, gerando um resumo didático objetivo, salvando no banco de dados e exibindo para o usuário.
+
+### 4.2 Geração de Questões sob Demanda
+- **Disponibilidade:** Na tela de **Questões**, através do botão "Gerar novas questões".
+- **Parâmetros:** O usuário escolhe o tópico, a quantidade (3, 5 ou 10) e opcionalmente o estilo de banca (Livre, CESPE/CEBRASPE, FGV, FCC).
+- **Regras:**
+  - O prompt instrui o Gemini a utilizar o resumo e dicas de prova do tópico como base de conteúdo.
+  - As questões geradas são estritamente originais ("no estilo da banca", nunca apresentadas como questões oficiais de provas anteriores).
+  - São salvas na tabela `questions` com `source = "ia_nova"` ou `"ia_estilo_banca"`.
+  - Erros de API ou limites de taxa são tratados com mensagens amigáveis na interface.

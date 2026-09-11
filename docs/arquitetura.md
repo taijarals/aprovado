@@ -1,36 +1,26 @@
 # Arquitetura do Sistema
 
 ## Stack Tecnológica
-- **Frontend:** React 19, TypeScript, Vite (bundler e dev server rápido), Tailwind CSS (estilização utilitária).
-- **Roteamento:** Wouter (roteador minimalista baseado em hooks).
-- **Backend / Banco de Dados:** Supabase (PostgreSQL + Supabase Auth).
-- **Inteligência Artificial:** Gemini (via `@google/genai`), já configurado para uso futuro.
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS.
+- **Backend (Custom Server):** Express (`server.ts`) para rotas de API seguras e proxy seguro para IA.
+- **Roteamento:** Wouter.
+- **Banco de Dados:** Supabase (PostgreSQL schema `aprovado` + Supabase Auth).
+- **Inteligência Artificial:** Gemini (`@google/genai` SDK usando o modelo `gemini-2.5-flash`), executado com segurança no backend.
 
 ## Estrutura de Pastas
 
-A organização do diretório `src/` segue um padrão de separação de responsabilidades:
+A organização do diretório segue um padrão de separação de responsabilidades:
 
-- `/src/components/`: Componentes visuais e de layout reutilizáveis (ex: `Layout.tsx`).
-- `/src/contexts/`: Gerenciadores de estado global usando React Context API (ex: `AuthContext.tsx`).
-- `/src/lib/`: Configurações e instâncias de clientes de terceiros (ex: `supabase.ts`).
-- `/src/pages/`: Componentes que representam telas inteiras roteáveis (ex: `Login.tsx`, `Dashboard.tsx`).
+- `/server.ts`: Servidor Node.js em Express que atua como backend intermediário para chamadas seguras ao Gemini e operações privilegiadas via `SUPABASE_SERVICE_ROLE_KEY`.
+- `/src/components/`: Componentes visuais e de layout reutilizáveis.
+- `/src/contexts/`: Gerenciadores de estado global (ex: `AuthContext.tsx`, `ExamContext.tsx`).
+- `/src/lib/`: Configurações de clientes (ex: `supabase.ts`).
+- `/src/pages/`: Componentes de telas (`Dashboard.tsx`, `PlanoEstudo.tsx`, `Questoes.tsx`, etc.).
+- `/docs/`: Documentação viva do sistema (arquitetura, regras de negócio, modelo de dados, persistência).
 
-## Fluxo de Comunicação (Camadas)
-
-A arquitetura segue um fluxo unidirecional de dados e responsabilidades:
-
-1. **Camada de Interface (Componentes e Páginas):**
-   - Interage com o usuário e exibe informações.
-   - Não acessa o banco de dados diretamente.
-   - Ex: `Dashboard.tsx` exibe os dados do usuário.
-
-2. **Camada de Estado / Regras (Contextos e Hooks):**
-   - Fornece dados para a interface e encapsula a lógica de negócio principal.
-   - Ex: `useAuth()` hook provido pelo `AuthContext.tsx` gerencia se o usuário está logado, ouvindo as mudanças de sessão.
-
-3. **Camada de Serviços / Infraestrutura (Client API):**
-   - Acessa o mundo externo (APIs, Banco de Dados).
-   - Ex: `src/lib/supabase.ts` exporta a instância configurada do Supabase Client, que se comunica via rede com o banco de dados PostgreSQL.
-
-**Exemplo de fluxo de Login:**
-`Login.tsx` (Interface) → Submete formulário → Chama função assíncrona usando `supabase.auth` (Serviço) → Atualiza `AuthContext` (Estado) → Redireciona via Wouter e renderiza `Dashboard.tsx` (Interface).
+## Fluxo de Comunicação e IA Generativa
+1. O usuário requisita a geração de um resumo didático ou de questões inéditas na interface.
+2. O frontend chama o endpoint correspondente no backend (`/api/ai/summary` ou `/api/ai/questions`).
+3. O servidor (`server.ts`) processa o prompt usando o SDK oficial `@google/genai` com o modelo `gemini-2.5-flash`.
+4. O resultado gerado pela IA é persistido no banco de dados Supabase e retornado ao cliente.
+5. A UI atualiza instantaneamente para exibir o conteúdo cacheado ou recém-gerado.

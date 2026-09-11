@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useExam } from '../contexts/ExamContext';
 import { supabase } from '../lib/supabase';
@@ -10,7 +10,9 @@ import {
   BarChart2, 
   Award, 
   RefreshCw,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  X
 } from 'lucide-react';
 
 interface Question {
@@ -34,6 +36,15 @@ interface Attempt {
   questions?: Question;
 }
 
+interface TopicOption {
+  id: string;
+  discipline: string;
+  subject: string;
+  topic_name: string;
+  summary: string | null;
+  exam_tips: string | null;
+}
+
 export default function Questoes() {
   const { user } = useAuth();
   const { selectedExam } = useExam();
@@ -48,6 +59,83 @@ export default function Questoes() {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // AI Question Generation state
+  const [isGeneratingModalOpen, setIsGeneratingModalOpen] = useState(false);
+  const [availableTopics, setAvailableTopics] = useState<TopicOption[]>([]);
+  const [selectedTopicId, setSelectedTopicId] = useState<string>('');
+  const [genQuantity, setGenQuantity] = useState<number>(5);
+  const [genBanca, setGenBanca] = useState<string>('livre');
+  const [generatingQuestions, setGeneratingQuestions] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+
+  const fetchTopicsForModal = async () => {
+    if (!selectedExam) return;
+    try {
+      const { data, error } = await supabase
+        .from('topic_exams')
+        .select('topic_id, topics (*)')
+        .eq('exam_id', selectedExam.id);
+
+      if (error) throw error;
+      const topicsList = (data || []).map((te: any) => te.topics).filter(Boolean);
+      setAvailableTopics(topicsList);
+      if (topicsList.length > 0 && !selectedTopicId) {
+        setSelectedTopicId(topicsList[0].id);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar tópicos para geração:', err);
+    }
+  };
+
+  const handleOpenGenerateModal = () => {
+    fetchTopicsForModal();
+    setIsGeneratingModalOpen(true);
+  };
+
+  const handleGenerateQuestionsSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedTopicId || !selectedExam) return;
+
+    const topic = availableTopics.find(t => t.id === selectedTopicId);
+    if (!topic) return;
+
+    try {
+      setGeneratingQuestions(true);
+      setGenError(null);
+
+      const res = await fetch('/api/ai/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examId: selectedExam.id,
+          topicId: topic.id,
+          discipline: topic.discipline,
+          topicName: topic.topic_name,
+          summary: topic.summary,
+          examTips: topic.exam_tips,
+          quantity: genQuantity,
+          bancaStyle: genBanca
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao gerar questões.');
+
+      await loadQuestionsAndAttempts();
+      setIsGeneratingModalOpen(false);
+      setActiveTab('resolver');
+      setCurrentIndex(0);
+      setSelectedAnswer(null);
+      setAnswered(false);
+      setIsCorrect(null);
+    } catch (err: any) {
+      console.error('Erro ao gerar questões:', err);
+      setGenError(err.message || 'Erro ao gerar questões com IA. Tente novamente.');
+    } finally {
+      setGeneratingQuestions(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedExam && user) {
@@ -211,28 +299,38 @@ export default function Questoes() {
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+        {/* Tabs and Generate Button */}
+        <div className="flex flex-wrap items-center gap-3">
           <button
-            onClick={() => setActiveTab('resolver')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === 'resolver'
-                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
+            onClick={handleOpenGenerateModal}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
           >
-            Resolver Questões
+            <Sparkles className="h-4 w-4" />
+            <span>Gerar novas questões</span>
           </button>
-          <button
-            onClick={() => setActiveTab('estatisticas')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === 'estatisticas'
-                ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            Histórico & Estatísticas
-          </button>
+
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+            <button
+              onClick={() => setActiveTab('resolver')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'resolver'
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Resolver Questões
+            </button>
+            <button
+              onClick={() => setActiveTab('estatisticas')}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'estatisticas'
+                  ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Histórico & Estatísticas
+            </button>
+          </div>
         </div>
       </div>
 
@@ -406,6 +504,117 @@ export default function Questoes() {
                 })}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Generate Questions Modal */}
+      {isGeneratingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setIsGeneratingModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-center space-x-2 text-purple-600 dark:text-purple-400 mb-2">
+              <Sparkles className="h-5 w-5" />
+              <h3 className="text-base font-semibold">Gerar Novas Questões com IA</h3>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              O Gemini criará questões inéditas baseadas no conteúdo e dicas de prova do tópico selecionado.
+            </p>
+
+            {genError && (
+              <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 text-red-700 dark:text-red-300 text-xs">
+                {genError}
+              </div>
+            )}
+
+            <form onSubmit={handleGenerateQuestionsSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Selecione o Tópico / Assunto
+                </label>
+                <select
+                  value={selectedTopicId}
+                  onChange={(e) => setSelectedTopicId(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  required
+                >
+                  {availableTopics.length === 0 ? (
+                    <option value="">Carregando tópicos...</option>
+                  ) : (
+                    availableTopics.map(t => (
+                      <option key={t.id} value={t.id}>
+                        [{t.discipline}] {t.subject} - {t.topic_name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Quantidade de Questões
+                  </label>
+                  <select
+                    value={genQuantity}
+                    onChange={(e) => setGenQuantity(Number(e.target.value))}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value={3}>3 questões</option>
+                    <option value={5}>5 questões</option>
+                    <option value={10}>10 questões</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Estilo de Banca
+                  </label>
+                  <select
+                    value={genBanca}
+                    onChange={(e) => setGenBanca(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="livre">Livre (Múltipla Escolha)</option>
+                    <option value="CESPE/CEBRASPE">CESPE / CEBRASPE (Certo/Errado)</option>
+                    <option value="FGV">FGV (Múltipla Escolha Avançada)</option>
+                    <option value="FCC">FCC (Múltipla Escolha Direta)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setIsGeneratingModalOpen(false)}
+                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={generatingQuestions || availableTopics.length === 0}
+                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 flex items-center space-x-2"
+                >
+                  {generatingQuestions ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Gerando com IA...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      <span>Gerar Questões</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -11,12 +11,13 @@ import {
   Menu,
   X,
   ChevronDown,
-  Award
+  Award,
+  AlertCircle
 } from 'lucide-react';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
-  const { exams, selectedExam, setSelectedExam } = useExam();
+  const { exams, selectedExam, setSelectedExam, schemaError, refreshExams } = useExam();
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -170,6 +171,23 @@ export default function Layout({ children }: { children: ReactNode }) {
         <main className="flex-1 pt-16 md:pt-0">
           <div className="py-8 md:py-10">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8">
+              {schemaError && (
+                <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6 text-amber-900 dark:text-amber-200 shadow-sm flex items-start space-x-4">
+                  <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold">Atenção: Configuração do Supabase (Schema Exposto)</h3>
+                    <p className="mt-1 text-sm leading-relaxed">{schemaError}</p>
+                    <div className="mt-4 flex space-x-3">
+                      <button
+                        onClick={refreshExams}
+                        className="px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-semibold hover:bg-amber-700 transition-colors shadow-sm"
+                      >
+                        Tentar novamente
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
               {children}
             </div>
           </div>
