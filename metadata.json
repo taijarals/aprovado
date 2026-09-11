@@ -1,0 +1,6 @@
+{
+  "name": "Aprova Fisco",
+  "description": "Aplicativo de estudos para concursos públicos SEFAZ-BA e SEFAZ-AL.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
