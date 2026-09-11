@@ -1,0 +1,33 @@
+# Registro de Decisões Técnicas (ADR - Architecture Decision Records)
+
+Este documento registra cronologicamente decisões arquiteturais e técnicas importantes e o raciocínio por trás delas.
+
+### Fase 1: Setup Inicial
+
+- **Decisão: Uso de React 19, Vite e Tailwind CSS.**
+  - *Contexto:* Necessidade de um frontend rápido, produtivo e fácil de escalar sem o peso de um framework Fullstack massivo se a renderização for essencialmente no lado do cliente (SPA).
+  - *Motivo:* Vite oferece HMR extremamente rápido e configuração mínima. Tailwind elimina a necessidade de múltiplos arquivos CSS e promove consistência no design system.
+
+- **Decisão: Supabase para Backend e Auth.**
+  - *Contexto:* Precisamos de um banco relacional robusto (PostgreSQL) e autenticação de forma rápida.
+  - *Motivo:* Supabase fornece PostgreSQL completo na nuvem, cliente amigável (`supabase-js`) e resolve a complexidade de Auth/Sessões sem demandar um servidor Node.js backend manual para validação inicial de credenciais.
+
+- **Decisão: Uso de `wouter` para Roteamento.**
+  - *Contexto:* Precisamos de navegação entre rotas de login e dashboard.
+  - *Motivo:* O `wouter` é muito mais minimalista e leve do que o `react-router`, facilitando a configuração rápida de SPAs com menos boilerplate e tamanho de bundle menor.
+
+### Fase 1.5: Configuração de Schema Isolado e Docs
+
+- **Decisão: Migração do banco para o schema customizado `aprovado`.**
+  - *Contexto:* Evitar colisões e misturas de dados caso o mesmo banco do Supabase seja utilizado para diferentes aplicações.
+  - *Motivo:* A separação clara (usando `db: { schema: 'aprovado' }` no cliente) aumenta a governança dos dados, mantém as tabelas de negócio do Aprova Fisco unidas em um único schema e deixa o schema `public` vazio e seguro.
+  
+- **Decisão: Implementação de "Documentação Viva" (`/docs`).**
+  - *Contexto:* Projetos construídos iterativamente podem perder contexto de regras e estruturas ao longo do tempo.
+  - *Motivo:* Manter arquivos em Markdown dentro do próprio repositório garante que a estrutura, persistência e as regras de negócio sejam lidas e atualizadas sistematicamente pelo desenvolvedor/assistente de IA em cada fase, prevenindo desvios arquiteturais.
+
+### Fase 1.8: Refinamento Visual e Design System
+
+- **Decisão: Adoção de um Design System Elegante e Minimalista ("Anti-Slop").**
+  - *Contexto:* Necessidade de uma interface profissional, que inspire foco e organização para estudantes de alta performance, fugindo de templates "padrões de IA" genéricos.
+  - *Motivo:* Estabelecer diretrizes claras (fonte *Plus Jakarta Sans*, paleta neutra com destaque em *Indigo-600*, foco em bordas ao invés de sombras pesadas, e alto uso de espaço em branco) na base garante que todas as telas futuras sigam um padrão coeso e respirável. Foi evitada a saturação visual em prol de legibilidade contínua.

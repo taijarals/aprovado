@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: var(--font-sans);
+}
