@@ -40,6 +40,6 @@ Este documento registra cronologicamente decisões arquiteturais e técnicas imp
   - *Contexto:* Riscos de direitos autorais ou termos de serviço ao fazer *scraping* ou importar bancos completos oficiais.
   - *Motivo:* Questões geradas por IA no estilo da banca real (FGV, CESPE) com base no edital, conferindo segurança jurídica e escopo flexível.
 
-- **Decisão: Deleções em Cascata (ON DELETE CASCADE) em FKs de dependência forte.**
-  - *Contexto:* O que acontece quando um exame (Concurso) é deletado?
-  - *Motivo:* Propagar deleções ajuda na limpeza e manutenção do banco. Se um concurso é apagado, semanas, relações de tópicos do edital e metas vinculadas vão junto.
+- **Decisão: Reaproveitamento do mapeamento BA/AL do dataset e métricas neutras/provisórias para o SEFAZ-AL.**
+  - *Contexto:* O dataset `topics.json` já continha a marcação exata dos 434 tópicos (indicando quais pertencem ao SEFAZ-AL via `presente_al26`). Precisávamos integrar o SEFAZ-AL sem reextrair tópicos do zero via IA e definir métricas iniciais sem histórico de provas da banca para o novo estado.
+  - *Motivo:* Aproveitar a matriz pré-mapeada garante precisão absoluta (225 compartilhados entre BA e AL, 166 exclusivos do AL). Como o SEFAZ-AL não possui histórico prévio de provas no sistema, definimos valores neutros e provisórios (`recurrence = 0`, `trend = "novo"`, prioridade baseada no peso e itens do edital), mantendo a prioridade calcada na estrutura oficial do edital até que dados reais de provas sejam acumulados.

@@ -12,7 +12,7 @@ As entidades dividem-se em dois grandes grupos:
 ## 1. Dados de Conteúdo
 
 ### `exams` (Concursos)
-Representa os editais ou concursos suportados pelo sistema.
+Representa os editais ou concursos suportados pelo sistema (ex: SEFAZ-BA 2022 e SEFAZ-AL 2026).
 - **Campos:** `id`, `name` (ex: SEFAZ-BA, SEFAZ-AL), `state` (BA, AL), `edition_year`, `status` (ativo/arquivado).
 
 ### `topics` (Tópicos do Edital - Globais)
