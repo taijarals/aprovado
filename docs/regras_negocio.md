@@ -15,16 +15,14 @@ Este documento centraliza as regras de negócio lógicas e fluxos de usuário da
 ### Priorização de Tópicos
 A ordem e relevância com que um tópico de edital é sugerido ao aluno depende do cálculo matemático de **Prioridade**.
 
-**Fórmula:**
-`Prioridade = (Recorrência + 1) * Peso * Fator de Tendência`
+**Fórmula de Prioridade (Seed SEFAZ-BA):**
+`Prioridade = ((Tendência * 0.3 + Recorrência * 0.4 + PesoNormalizado * 0.3) * 10)`
 
 **Racional das variáveis:**
-- **Recorrência:** Número bruto de vezes que o assunto caiu em provas anteriores daquela banca para a área fiscal. Adicionamos `+1` na fórmula para garantir que um tópico inédito não seja anulado.
-- **Peso:** Pontuação/peso intrínseco da disciplina naquele edital específico.
-- **Fator de Tendência:** Métrica comportamental recente:
-  - *Crescente*: Multiplicador `1.2`.
-  - *Estável*: Multiplicador `1.0`.
-  - *Decrescente*: Multiplicador `0.8`.
+- **Tendência (0 a 10 - peso 30%):** Avalia a propensão recente da banca (ex: FGV/Cebraspe) cobrar o assunto em provas fiscais recentes.
+- **Recorrência (0 a 10 - peso 40%):** Frequência histórica com que o assunto foi cobrado nos editais anteriores da SEFAZ-BA (2019 e 2022).
+- **Peso Normalizado (0 a 10 - peso 30%):** Relevância pontual da disciplina/tópico no edital, normalizada para a base 0-10 caso venha na escala original de 0-5.
+- O resultado é multiplicado por 10 para fornecer uma nota de prioridade de 0 a 100, facilitando a classificação em faixas (Altíssima, Alta, Média, Baixa).
 
 ## 3. Comportamento das Telas Principais
 

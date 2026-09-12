@@ -8,9 +8,9 @@ A aplicação utiliza o **Supabase (PostgreSQL)** como solução de persistênci
 
 ### Volume de Dados Carregado (SEFAZ-BA e SEFAZ-AL)
 - **Editais (`exams`):** 2 registros ("SEFAZ-BA", 2022 e "SEFAZ-AL", 2026).
-- **Tópicos Globais (`topics`)**: Base unificada de tópicos (incluindo 225 compartilhados BA+AL e 166 exclusivos de AL).
-- **Relações Tópico-Edital (`topic_exams`)**: Métricas de recorrência, tendência (`crescente`, `estável`, `decrescente` ou `novo`), peso, prioridade, número de itens (`items_count`) e discursiva (`is_discursive`) por edital.
-- **Cronograma (`weeks`, `goals`, `materials`)**: Estruturado para SEFAZ-BA (16 semanas) e pronto para expansão em SEFAZ-AL.
+- **Tópicos Globais (`topics`):** 375 tópicos mapeados e persistidos no banco de dados para o edital SEFAZ-BA.
+- **Relações Tópico-Edital (`topic_exams`):** 268 relações cadastradas para a SEFAZ-BA com métricas de tendência, recorrência, peso e prioridade calculada.
+- **Cronograma (`weeks`, `goals`, `materials`):** 16 semanas, 156 metas e 543 materiais de estudo cadastrados com links reais do Gran Cursos e dicas de estudo.
 
 ### Tabelas do Domínio
 - **Conteúdo e Relacionamentos:** `exams`, `topics`, `topic_exams` (relação muitos-para-muitos), `weeks`, `goals`, `materials`, `questions`.
