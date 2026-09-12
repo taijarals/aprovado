@@ -140,6 +140,8 @@ export default function Questoes() {
   useEffect(() => {
     if (selectedExam && user) {
       loadQuestionsAndAttempts();
+    } else {
+      setLoading(false);
     }
   }, [selectedExam, user]);
 
@@ -243,6 +245,39 @@ export default function Questoes() {
         selected_answer: selectedAnswer,
         is_correct: correct
       });
+
+      // Update user_progress for spaced repetition if topic_id exists
+      if (currentQ.topic_id && selectedExam) {
+        const { data: existingProg } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('topic_id', currentQ.topic_id)
+          .eq('exam_id', selectedExam.id)
+          .maybeSingle();
+
+        const questionsDone = (existingProg?.questions_done || 0) + 1;
+        const correctCount = (existingProg?.correct_count || 0) + (correct ? 1 : 0);
+        const masteryScore = Math.round((correctCount / questionsDone) * 100);
+
+        // Simplified SM-2 Spaced Repetition interval
+        const daysToAdd = masteryScore >= 80 ? 7 : masteryScore >= 50 ? 3 : 1;
+        const nextReviewAt = new Date(Date.now() + daysToAdd * 86400000).toISOString();
+
+        await supabase
+          .from('user_progress')
+          .upsert({
+            user_id: user.id,
+            topic_id: currentQ.topic_id,
+            exam_id: selectedExam.id,
+            status: masteryScore >= 70 ? 'revisado' : 'estudando',
+            questions_done: questionsDone,
+            correct_count: correctCount,
+            mastery_score: masteryScore,
+            next_review_at: nextReviewAt,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id,topic_id,exam_id' });
+      }
 
       // Refresh attempts
       const { data: attData } = await supabase

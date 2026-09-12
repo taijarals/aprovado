@@ -109,6 +109,8 @@ export default function PlanoEstudo() {
   useEffect(() => {
     if (selectedExam && user) {
       fetchStudyPlan();
+    } else {
+      setLoading(false);
     }
   }, [selectedExam, user]);
 

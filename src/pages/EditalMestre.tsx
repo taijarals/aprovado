@@ -49,6 +49,8 @@ export default function EditalMestre() {
   useEffect(() => {
     if (selectedExam && user) {
       fetchEditalData();
+    } else {
+      setLoading(false);
     }
   }, [selectedExam, user]);
 

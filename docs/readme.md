@@ -8,16 +8,16 @@ Candidatos e concurseiros que estão se preparando para os cargos de Auditor Fis
 
 ## Funcionalidades
 
-### Construídas (Até o momento)
-- [x] Setup inicial do projeto (React, TypeScript, Vite, Tailwind CSS).
-- [x] Configuração de roteamento simplificado com Wouter.
-- [x] Autenticação completa via Supabase Auth (Login/Cadastro com E-mail e Senha).
-- [x] Proteção de rotas (Redirecionamento automático para usuários não logados).
-- [x] Layout base responsivo com Sidebar de navegação e seletor de edital ativo.
-- [x] **Dashboard:** KPIs de progresso, tópicos concluídos, taxa de acerto e gráfico de prioridade média por disciplina.
-- [x] **Plano de Estudo:** Cronograma em formato de acordeão por semanas, marcação de conclusão de materiais, visualização de `study_tip` em modal e filtro por disciplina.
-- [x] **Edital Mestre:** Tabela completa de tópicos com métricas de recorrência, tendência, peso, prioridade calculada, ordenação, filtros e indicador de tópicos compartilhados entre editais.
-- [x] **Questões:** Módulo de resolução de questões com gabarito comentado instantâneo, registro de tentativas e aba de estatísticas e desempenho por disciplina.
+### Funcionalidades (Status Final)
+
+- [x] **Setup & Arquitetura:** React, TypeScript, Vite, Tailwind CSS, Wouter, Express backend proxy, Supabase (schema `aprovado`) e Supabase Auth.
+- [x] **Múltiplos Editais:** Suporte completo e seletor ativo para **SEFAZ-BA (2022)** e **SEFAZ-AL (2026)** com tópicos compartilhados e exclusivos.
+- [x] **Dashboard:** KPIs de progresso, tópicos pendentes, questões respondidas, taxa de acerto e gráfico de prioridade média por disciplina.
+- [x] **Onboarding & Boas-Vindas:** Tela de boas-vindas dinâmica para novos usuários orientando o início pela Semana 1.
+- [x] **Plano de Estudo:** Cronograma estruturado por semanas, conclusão de materiais e **Geração de Resumos com IA** (`gemini-2.5-flash`) sob demanda com cache em banco de dados.
+- [x] **Edital Mestre:** Tabela completa de tópicos com métricas de recorrência, tendência, peso, prioridade calculada e filtros avançados.
+- [x] **Questões & Repetição Espaçada:** Módulo de resolução com gabarito comentado, **Geração de Questões Inéditas com IA** (estilo CESPE, FGV, FCC, livre) e algoritmo de revisão espaçada (SM-2 simplificado) atualizando `mastery_score` e `next_review_at`.
+- [x] **Responsividade & UX:** Sidebar colapsável em mobile, navegação fluida e design system limpo sem poluição visual.
 
 ## Como rodar o projeto localmente
 

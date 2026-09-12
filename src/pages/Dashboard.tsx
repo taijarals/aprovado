@@ -35,6 +35,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedExam && user) {
       fetchDashboardData();
+    } else {
+      setLoading(false);
     }
   }, [selectedExam, user]);
 
