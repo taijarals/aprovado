@@ -26,8 +26,20 @@ function calculatePriority(recurrence: number, tendencia: number, weight: number
   return Number(((recurrence + 1) * weight * trendFactor).toFixed(2));
 }
 
-async function runAlSeed() {
-  console.log('Iniciando o Seed do SEFAZ-AL (Schema Aprovado)...');
+async function resetAndSeed() {
+  console.log('--- RESETANDO E REPOPULANDO BANCO DE DADOS (SEFAZ-BA & SEFAZ-AL) ---');
+
+  // 1. Limpar tabelas na ordem correta
+  await supabase.from('question_attempts').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('user_progress').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('materials').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('goals').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('weeks').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('topic_exams').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('topics').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('exams').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  console.log('Tabelas limpas com sucesso.');
 
   let topicsData: any[] = [];
   try {
@@ -37,61 +49,74 @@ async function runAlSeed() {
     process.exit(1);
   }
 
-  const alTopics = topicsData.filter(t => t.presente_al26 === true);
-  const sharedTopics = alTopics.filter(t => t.presente_ba19 === true || t.presente_ba22 === true);
-  const exclusiveTopics = alTopics.filter(t => !t.presente_ba19 && !t.presente_ba22);
-
-  // Salvar arquivos JSON solicitados
-  fs.writeFileSync(path.join(__dirname, 'data/topicos_al_compartilhados.json'), JSON.stringify(sharedTopics, null, 2), 'utf-8');
-  fs.writeFileSync(path.join(__dirname, 'data/topicos_al_exclusivos.json'), JSON.stringify(exclusiveTopics, null, 2), 'utf-8');
-
-  console.log(`Total AL: ${alTopics.length} | Compartilhados: ${sharedTopics.length} | Exclusivos AL: ${exclusiveTopics.length}`);
-
-  // 1. Criar ou buscar Exame SEFAZ-AL (2026, Estado AL, Banca CESPE/CEBRASPE, Cargo Auditor Fiscal da Receita Estadual)
-  let examId = '';
-  const { data: existingExam, error: examFetchErr } = await supabase
+  // 2. Criar Exame SEFAZ-BA (2022)
+  const { data: baExam, error: baExamErr } = await supabase
     .from('exams')
+    .insert({ name: 'SEFAZ-BA', state: 'BA', edition_year: 2022, status: 'ativo' })
     .select('id')
-    .eq('name', 'SEFAZ-AL')
-    .maybeSingle();
+    .single();
+  if (baExamErr) throw baExamErr;
+  const baExamId = baExam.id;
+  console.log('Criado Edital SEFAZ-BA (2022)');
 
-  if (examFetchErr) {
-    console.error('Erro ao buscar exame SEFAZ-AL:', examFetchErr);
-    return;
-  }
+  // Inserir Tópicos SEFAZ-BA (presente_ba19 || presente_ba22)
+  const baTopics = topicsData.filter(t => t.presente_ba19 === true || t.presente_ba22 === true);
+  for (const t of baTopics) {
+    const discipline = t.disciplina.trim();
+    const subject = t.assunto.trim();
 
-  if (!existingExam) {
-    console.log('Criando edital SEFAZ-AL (2026) - Auditor Fiscal da Receita Estadual (CESPE / CEBRASPE)...');
-    const { data: newExam, error: examErr } = await supabase
-      .from('exams')
-      .insert({ 
-        name: 'SEFAZ-AL', 
-        state: 'AL', 
-        edition_year: 2026, 
-        status: 'ativo'
+    let { data: top } = await supabase
+      .from('topics')
+      .insert({
+        discipline,
+        subject,
+        topic_name: subject,
+        source: t.fonte_principal || null
       })
       .select('id')
       .single();
-    if (examErr) {
-      console.error('Erro ao criar exame SEFAZ-AL:', examErr);
-      return;
+
+    if (top) {
+      const recurrence = t.recorrencia_0_10 || 0;
+      const tendencia = t.tendencia_0_10 || 5;
+      const trendStr = tendencia >= 7 ? 'crescente' : tendencia <= 4 ? 'decrescente' : 'estável';
+      const weight = t.peso_0_10 || 5;
+      const priority = calculatePriority(recurrence, tendencia, weight);
+
+      await supabase.from('topic_exams').insert({
+        topic_id: top.id,
+        exam_id: baExamId,
+        recurrence,
+        trend: trendStr,
+        weight,
+        priority
+      });
     }
-    examId = newExam.id;
-  } else {
-    examId = existingExam.id;
-    console.log('Edital SEFAZ-AL já cadastrado.');
   }
+  console.log(`SEFAZ-BA populada com ${baTopics.length} tópicos.`);
+
+  // 3. Criar Exame SEFAZ-AL (2026, Auditor Fiscal da Receita Estadual, CESPE / CEBRASPE)
+  const { data: alExam, error: alExamErr } = await supabase
+    .from('exams')
+    .insert({ name: 'SEFAZ-AL', state: 'AL', edition_year: 2026, status: 'ativo' })
+    .select('id')
+    .single();
+  if (alExamErr) throw alExamErr;
+  const alExamId = alExam.id;
+  console.log('Criado Edital SEFAZ-AL (2026) - Auditor Fiscal da Receita Estadual (CESPE / CEBRASPE)');
+
+  const alTopics = topicsData.filter(t => t.presente_al26 === true);
+  const sharedTopics = alTopics.filter(t => t.presente_ba19 === true || t.presente_ba22 === true);
+  const exclusiveTopics = alTopics.filter(t => !t.presente_ba19 && !t.presente_ba22);
 
   let sharedFoundCount = 0;
   const notFoundShared: string[] = [];
   let topicExamsSharedCount = 0;
 
-  console.log('\nProcessando tópicos compartilhados (SEFAZ-BA -> SEFAZ-AL)...');
   for (const t of sharedTopics) {
     const discipline = t.disciplina.trim();
     const subject = t.assunto.trim();
 
-    // Buscar tópico existente na tabela topics
     const { data: existingTopic } = await supabase
       .from('topics')
       .select('id')
@@ -115,54 +140,29 @@ async function runAlSeed() {
     const itemsCount = t.itens_al26_disciplina || null;
     const isDiscursive = t.discursiva_al26 || false;
 
-    // Upsert em topic_exams
-    const { data: existingRel } = await supabase
+    const { error: relErr } = await supabase
       .from('topic_exams')
-      .select('id')
-      .eq('topic_id', topicId)
-      .eq('exam_id', examId)
-      .maybeSingle();
+      .insert({
+        topic_id: topicId,
+        exam_id: alExamId,
+        recurrence,
+        trend: trendStr,
+        weight,
+        priority,
+        items_count: itemsCount,
+        is_discursive: isDiscursive
+      });
 
-    if (!existingRel) {
-      const { error: relErr } = await supabase
-        .from('topic_exams')
-        .insert({
-          topic_id: topicId,
-          exam_id: examId,
-          recurrence,
-          trend: trendStr,
-          weight,
-          priority,
-          items_count: itemsCount,
-          is_discursive: isDiscursive
-        });
-      if (!relErr) topicExamsSharedCount++;
-    } else {
-      await supabase
-        .from('topic_exams')
-        .update({
-          recurrence,
-          trend: trendStr,
-          weight,
-          priority,
-          items_count: itemsCount,
-          is_discursive: isDiscursive
-        })
-        .eq('topic_id', topicId)
-        .eq('exam_id', examId);
-      topicExamsSharedCount++;
-    }
+    if (!relErr) topicExamsSharedCount++;
   }
 
   let newTopicsCreatedCount = 0;
   let topicExamsExclusiveCount = 0;
 
-  console.log('\nProcessando tópicos exclusivos do SEFAZ-AL...');
   for (const t of exclusiveTopics) {
     const discipline = t.disciplina.trim();
     const subject = t.assunto.trim();
 
-    // Criar novo tópico com summary e exam_tips como null
     const { data: newTop, error: topErr } = await supabase
       .from('topics')
       .insert({
@@ -196,7 +196,7 @@ async function runAlSeed() {
       .from('topic_exams')
       .insert({
         topic_id: topicId,
-        exam_id: examId,
+        exam_id: alExamId,
         recurrence,
         trend: trendStr,
         weight,
@@ -222,4 +222,4 @@ async function runAlSeed() {
   console.log('========================================\n');
 }
 
-runAlSeed().catch(console.error);
+resetAndSeed().catch(console.error);
