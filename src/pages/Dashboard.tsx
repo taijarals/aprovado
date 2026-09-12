@@ -2,19 +2,32 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useExam } from '../contexts/ExamContext';
 import { supabase } from '../lib/supabase';
+import { Link } from 'wouter';
 import { 
   CheckCircle2, 
   Clock, 
   HelpCircle, 
   Award, 
   TrendingUp, 
-  BookOpen
+  BookOpen,
+  Sparkles,
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface DisciplinePriority {
   discipline: string;
   avgPriority: number;
+}
+
+interface ReviewItem {
+  id: string;
+  next_review_at: string;
+  topics: {
+    discipline: string;
+    subject: string;
+  } | null;
 }
 
 export default function Dashboard() {
@@ -31,6 +44,7 @@ export default function Dashboard() {
     pendingTopics: 0
   });
   const [priorityChartData, setPriorityChartData] = useState<DisciplinePriority[]>([]);
+  const [reviewDueList, setReviewDueList] = useState<ReviewItem[]>([]);
 
   useEffect(() => {
     if (selectedExam && user) {
@@ -112,6 +126,18 @@ export default function Dashboard() {
         pendingTopics
       });
 
+      // 4. Fetch review-due topics (next_review_at <= now)
+      const nowIso = new Date().toISOString();
+      const { data: revData } = await supabase
+        .from('user_progress')
+        .select('id, next_review_at, topics (discipline, subject)')
+        .eq('user_id', user.id)
+        .eq('exam_id', selectedExam.id)
+        .lte('next_review_at', nowIso)
+        .limit(5);
+
+      setReviewDueList(revData || []);
+
     } catch (err) {
       console.error('Erro ao carregar dashboard:', err);
     } finally {
@@ -127,6 +153,8 @@ export default function Dashboard() {
     );
   }
 
+  const isNewUser = stats.completedTopics === 0 && stats.questionsAnswered === 0;
+
   return (
     <div className="space-y-8">
       <div>
@@ -135,6 +163,68 @@ export default function Dashboard() {
           Acompanhamento de desempenho para <span className="font-medium text-indigo-600 dark:text-indigo-400">{selectedExam?.name}</span> ({selectedExam?.edition_year}).
         </p>
       </div>
+
+      {/* Onboarding Welcome Banner if no progress yet */}
+      {isNewUser && (
+        <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="inline-flex items-center space-x-2 bg-indigo-100 dark:bg-indigo-900/60 px-3 py-1 rounded-full text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Primeiros Passos no Aprova Fisco</span>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Bem-vindo(a) à sua preparação fiscal!</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
+                Você ainda não registrou progresso neste edital. Recomendamos iniciar seus estudos pela <strong>Semana 1</strong> no Plano de Estudo ou explorar o <strong>Edital Mestre</strong> para priorizar os tópicos de maior peso e recorrência.
+              </p>
+            </div>
+            <div className="flex items-center space-x-3 w-full sm:w-auto">
+              <Link 
+                href="/plano"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-2xl shadow-sm transition-all"
+              >
+                <span>Ir para Plano de Estudo</span>
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Spaced Repetition Review Due Alert */}
+      {reviewDueList.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/80 p-6 rounded-3xl shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-xl text-amber-700 dark:text-amber-300">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Revisão Espaçada Pendente ({reviewDueList.length})</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Tópicos com revisão vencida pelo algoritmo de repetição espaçada.</p>
+              </div>
+            </div>
+            <Link 
+              href="/questoes" 
+              className="text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline flex items-center"
+            >
+              Praticar Questões <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {reviewDueList.map(item => (
+              <div key={item.id} className="bg-white dark:bg-gray-900 border border-amber-100 dark:border-amber-900/50 p-3.5 rounded-2xl">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  {item.topics?.discipline}
+                </span>
+                <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 mt-0.5 line-clamp-1">
+                  {item.topics?.subject}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
